@@ -1,0 +1,20 @@
+{
+  "name": "schoolgram-next",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "bun run --watch src/index.tsx"
+  },
+  "dependencies": {
+    "jsdom": "^26.0.0",
+    "netschoolapi": "^1.12.1",
+    "pg": "^8.7.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.17",
+    "@types/react-dom": "^18.0.6",
+    "bun": "^1.2.6",
+    "typescript": "^5.8.2"
+  }
+}
