@@ -5,6 +5,7 @@ Source Tree:
 ```
 code
 ├── bun.lockb
+├── langchain.md
 ├── README.md
 ├── package.json
 ├── tsconfig.json
@@ -29,10 +30,11 @@ code
     "start": "bun run --watch src/index.tsx"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "jsdom": "^26.0.0",
+    "netschoolapi": "^1.12.1",
     "pg": "^8.7.3",
-    "netschoolapi": "^1.12.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.17",
@@ -86,16 +88,27 @@ console.log("Hello via Bun!");
 `/Users/goosedev72/vscode/new-dnevnik/code/src/index.tsx`:
 
 ```tsx
+import { serve } from 'bun';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { renderToString } from 'react-dom/server';
 import App from './App';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+serve({
+  port: 3000,
+  fetch: (req) => {
+    const html = renderToString(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html',
+      },
+    });
+  },
+});
 ```
 
 `/Users/goosedev72/vscode/new-dnevnik/code/src/App.tsx`:

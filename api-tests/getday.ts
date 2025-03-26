@@ -8,8 +8,8 @@ const user = new NS({
 });
 
 // Задаём период для получения дневника
-const startDate = new Date('2025-04-20');
-const endDate = new Date('2025-04-20');
+const startDate = new Date('2025-03-20');
+const endDate = new Date('2025-03-20');
 
 // Получаем данные дневника
 const diaryData = await user.diary({

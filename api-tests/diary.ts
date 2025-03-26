@@ -1,14 +1,14 @@
 import NS from "netschoolapi";
 
 const user = new NS({
-  origin: "origin",
-  login: "username",
-  password: "password",
-  school: "school", // Название школы (полностью) или её id
+  origin: "https://sgo.rso23.ru/",
+  login: "КуликК4",
+  password: "6294386",
+  school: "МАОУ СОШ № 102", // Название школы (полностью) или её id
 });
 
-const startDate = new Date('date');
-const endDate = new Date('date');
+const startDate = new Date('2025-03-20');
+const endDate = new Date('2025-03-20');
 
 (async function () {
   // Получаем дневник
