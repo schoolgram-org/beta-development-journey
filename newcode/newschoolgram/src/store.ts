@@ -1,7 +1,7 @@
 import NS from 'netschoolapi';
 
 interface Store {
-  user: NS | null;
+  user: null;
 }
 
 const store: Store = {

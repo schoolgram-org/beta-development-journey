@@ -1,0 +1,12 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun run --watch main.ts"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "netschoolapi": "^1.1.4",
+    "fs": "^0.0.1-security"
+  }
+}

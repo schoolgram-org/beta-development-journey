@@ -7,8 +7,8 @@ const user = new NS({
   school: "school", // Название школы (полностью) или её id
 });
 
-const startDate = new Date('2025-03-20');
-const endDate = new Date('2025-03-20');
+const startDate = new Date('2025-03-16');
+const endDate = new Date('2025-03-21');
 
 (async function () {
   // Получаем дневник

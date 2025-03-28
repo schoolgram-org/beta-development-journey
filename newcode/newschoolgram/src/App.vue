@@ -6,9 +6,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import Login from './components/Login.vue'
-import LessonsList from './components/LessonsList.vue'
+import { defineComponent, ref } from 'vue';
+import store from '../store';
+import Login from './components/Login.vue';
 
 interface Lesson {
   id: number;
@@ -24,40 +24,33 @@ interface Lesson {
 export default defineComponent({
   components: {
     Login,
-    LessonsList
+    LessonsList,
   },
   setup() {
-    const lessons = ref<Lesson[]>([])
+    const lessons = ref<Lesson[]>([]);
+    const startDate = ref<string>('');
+    const endDate = ref<string>('');
 
-    const updateLessons = async () => {
+    const updateLessons = async (date: string) => {
       try {
-        // Получить JSON из дневника
-        console.log("Hoo")
-        (async function () {
-          if (store.user) {
-            // Получаем дневник
-            const diary = await store.user.diary({
-              start: startDate,
-              end: endDate,
-            });
-
-            const diaryJSON = diary.toJSON();
-            const data = JSON.stringify(diaryJSON);
-          } else {
-            console.log('Пользователь не авторизован');
-          }
-        })();
-        // Обновить данные в приложении
-        lessons.value = data.days[0].lessons
+        const response = await fetch(`http://localhost:3000/diary`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ date }),
+        });
+        const data = await response.json();
+        lessons.value = data.days[0].lessons;
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
-    }
+    };
 
     return {
       lessons,
-      updateLessons
-    }
-  }
-})
+      updateLessons,
+    };
+  },
+});
 </script>
