@@ -10,6 +10,7 @@ interface State {
   diaryData: {
     lessons: any[];
   };
+  isAuthenticated: boolean; // Новое состояние авторизации
 }
 
 const initialState: State = {
@@ -22,6 +23,7 @@ const initialState: State = {
   diaryData: {
     lessons: [],
   },
+  isAuthenticated: false, // Инициализация нового состояния
 };
 
 const store = createStore({
@@ -33,6 +35,9 @@ const store = createStore({
     updateDiaryData(state, diaryData) {
       state.diaryData = diaryData;
     },
+    setAuthenticated(state, isAuthenticated) {
+      state.isAuthenticated = isAuthenticated;
+    }, // Mutation для обновления состояния авторизации
   },
   getters: {
     getLoginData(state) {
@@ -41,6 +46,9 @@ const store = createStore({
     getDiaryData(state) {
       return state.diaryData;
     },
+    getIsAuthenticated(state) {
+      return state.isAuthenticated;
+    }, // Getter для нового состояния авторизации
   },
 });
 

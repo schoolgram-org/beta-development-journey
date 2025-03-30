@@ -1,77 +1,32 @@
 <template>
   <div>
-    <Login v-if="!isLoggedIn" @login-success="handleLoginSuccess" />
+    <Login v-if="!isAuthenticated" @login-success="handleLoginSuccess" />
     <div v-else>
-      <input type="date" v-model="selectedDate" @change="fetchDiary">
-      <LessonsList v-if="diaryData" :lessons="diaryData.lessons" />
-      <div v-if="loginData">
-        <h2>diary</h2>
-      </div>
+      <Diary />
+      <Footer />
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { ref } from 'vue';
-import Login from './components/Login.vue';
-import LessonsList from './components/LessonsList.vue';
-import axios from 'axios';
+<script>
+import { computed } from 'vue';
 import { useStore } from 'vuex';
-import store from './store/index'; 
+import Login from './components/Login.vue';
+import Diary from './components/Diary.vue';
+import Footer from './components/Footer.vue';
 
 export default {
-  components: { Login, LessonsList },
+  components: { Login, Diary, Footer },
   setup() {
     const store = useStore();
-    let loginData = store.getters.getLoginData;
-    const isLoggedIn = ref(false);
-    const selectedDate = ref('');
-    const diaryData = ref(null);
+    const isAuthenticated = computed(() => store.getters.getIsAuthenticated);
 
     const handleLoginSuccess = () => {
-      isLoggedIn.value = true;
-      loginData.value = store.getters.getLoginData;
+      store.commit('setAuthenticated', true);
+      // Обновить состояние авторизации в localStorage или cookies, если нужно
     };
 
-    const waitForLoginData = async () => {
-      while (!loginData ||!loginData.origin ||!loginData.user ||!loginData.password ||!loginData.school) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        loginData = store.getters.getLoginData;
-      }
-    };
-
-    const fetchDiary = async () => {
-      if (!loginData.value || Object.keys(loginData.value).length === 0) {
-        console.error('loginData is empty');
-        return;
-      }
-      // console.log(store.getters.getLoginData.origin);
-      // console.log(store.getters.getLoginData.user);
-      // console.log(store.getters.getLoginData.password);
-      // console.log(store.getters.getLoginData.school);
-      try {
-        const response = await axios.get(`http://localhost:3000/diary/${selectedDate.value}`, {
-          params: {
-            origin: store.getters.getLoginData.origin,
-            user: store.getters.getLoginData.user,
-            password: store.getters.getLoginData.password,
-            school: store.getters.getLoginData.school,
-          },
-        });
-        store.commit('updateDiaryData', response.data); // Обновление состояния с помощью мутации
-      } catch (error) {
-        console.error('Error fetching diary:', error);
-      }
-    };
-
-    return { 
-      isLoggedIn, 
-      selectedDate, 
-      diaryData, 
-      handleLoginSuccess, 
-      fetchDiary, 
-      loginData 
-    };
+    return { isAuthenticated, handleLoginSuccess };
   },
 };
 </script>
