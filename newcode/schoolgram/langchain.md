@@ -22,16 +22,19 @@ schoolgram
 │       ├── components
 │       │   ├── Login.vue
 │       │   ├── LessonCard.vue
-│       │   ├── LessonsList.vue
-│       │   └── HelloWorld.vue
+│       │   └── LessonsList.vue
 │       ├── vite-env.d.ts
 │       ├── style.css
-│       └── assets
-│           └── vue.svg
+│       ├── assets
+│       │   └── vue.svg
+│       └── store
+│           └── index.ts
 ├── bun.lockb
+├── langchain.md
 ├── backend
 │   ├── main.ts
-│   └── package.json
+│   ├── package.json
+│   └── lol.html
 └── package.json
 
 ```
@@ -180,6 +183,9 @@ export default defineConfig({
     <div v-else>
       <input type="date" v-model="selectedDate" @change="fetchDiary">
       <LessonsList v-if="diaryData" :lessons="diaryData.lessons" />
+      <div v-if="loginData">
+        <h2>diary</h2>
+      </div>
     </div>
   </div>
 </template>
@@ -188,35 +194,65 @@ export default defineConfig({
 import { ref } from 'vue';
 import Login from './components/Login.vue';
 import LessonsList from './components/LessonsList.vue';
-import axios from 'axios'; // Импортируем axios
-
-const api = axios.create({ // Создаем экземпляр axios с базовой URL
-  baseURL: 'http://localhost:3000'
-});
+import axios from 'axios';
+import { useStore } from 'vuex';
+import store from './store/index'; 
 
 export default {
   components: { Login, LessonsList },
   setup() {
+    const store = useStore();
+    let loginData = store.getters.getLoginData;
     const isLoggedIn = ref(false);
     const selectedDate = ref('');
     const diaryData = ref(null);
 
     const handleLoginSuccess = () => {
       isLoggedIn.value = true;
+      loginData.value = store.getters.getLoginData;
+    };
+
+    const waitForLoginData = async () => {
+      while (!loginData ||!loginData.origin ||!loginData.user ||!loginData.password ||!loginData.school) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        loginData = store.getters.getLoginData;
+      }
     };
 
     const fetchDiary = async () => {
+      if (!loginData.value || Object.keys(loginData.value).length === 0) {
+        console.error('loginData is empty');
+        return;
+      }
+      // console.log(store.getters.getLoginData.origin);
+      // console.log(store.getters.getLoginData.user);
+      // console.log(store.getters.getLoginData.password);
+      // console.log(store.getters.getLoginData.school);
       try {
-        const response = await api.get(`/diary/${selectedDate.value}`); // Используем axios для запроса
-        diaryData.value = response.data;
+        const response = await axios.get(`http://localhost:3000/diary/${selectedDate.value}`, {
+          params: {
+            origin: store.getters.getLoginData.origin,
+            user: store.getters.getLoginData.user,
+            password: store.getters.getLoginData.password,
+            school: store.getters.getLoginData.school,
+          },
+        });
+        store.commit('updateDiaryData', response.data); // Обновление состояния с помощью мутации
       } catch (error) {
         console.error('Error fetching diary:', error);
       }
     };
 
-    return { isLoggedIn, selectedDate, diaryData, handleLoginSuccess, fetchDiary }
-  }
-}
+    return { 
+      isLoggedIn, 
+      selectedDate, 
+      diaryData, 
+      handleLoginSuccess, 
+      fetchDiary, 
+      loginData 
+    };
+  },
+};
 </script>
 ```
 
@@ -225,8 +261,9 @@ export default {
 ```ts
 import { createApp } from 'vue'
 import App from './App.vue'
+import store from './store/index';
 
-createApp(App).mount('#app')
+createApp(App).use(store).mount('#app')
 
 ```
 
@@ -260,6 +297,7 @@ createApp(App).mount('#app')
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+import { useStore } from 'vuex';
 
 interface LoginData {
   origin: string;
@@ -270,7 +308,8 @@ interface LoginData {
 
 export default defineComponent({
   setup(props, { emit }) {
-    const loginData = ref<LoginData>({
+    const store = useStore();
+    const loginData = ref({
       origin: '',
       school: '',
       user: '',
@@ -278,14 +317,13 @@ export default defineComponent({
     });
 
     const handleSubmit = async () => {
-      // Здесь должна быть логика авторизации
-      // Для демонстрации просто эмитим событие login-success
+      store.commit('updateLoginData', loginData.value);
       emit('login-success');
     };
 
-    return { loginData, handleSubmit }
-  }
-})
+    return { loginData, handleSubmit };
+  },
+});
 </script>
 ```
 
@@ -379,53 +417,6 @@ export default defineComponent({
 .lessons-list {
   display: flex;
   flex-direction: column;
-}
-</style>
-
-```
-
-`/Users/goosedev72/vscode/new-dnevnik/newcode/schoolgram/frontend/src/components/HelloWorld.vue`:
-
-```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-
-defineProps<{ msg: string }>()
-
-const count = ref(0)
-</script>
-
-<template>
-  <h1>{{ msg }}</h1>
-
-  <div class="card">
-    <button type="button" @click="count++">count is {{ count }}</button>
-    <p>
-      Edit
-      <code>components/HelloWorld.vue</code> to test HMR
-    </p>
-  </div>
-
-  <p>
-    Check out
-    <a href="https://vuejs.org/guide/quick-start.html#local" target="_blank"
-      >create-vue</a
-    >, the official Vue + Vite starter
-  </p>
-  <p>
-    Learn more about IDE Support for Vue in the
-    <a
-      href="https://vuejs.org/guide/scaling-up/tooling.html#ide-support"
-      target="_blank"
-      >Vue Docs Scaling up Guide</a
-    >.
-  </p>
-  <p class="read-the-docs">Click on the Vite and Vue logos to learn more</p>
-</template>
-
-<style scoped>
-.read-the-docs {
-  color: #888;
 }
 </style>
 
@@ -529,53 +520,127 @@ button:focus-visible {
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="37.07" height="36" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 198"><path fill="#41B883" d="M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0h47.36Z"></path><path fill="#41B883" d="m0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0Z"></path><path fill="#35495E" d="M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56Z"></path></svg>
 ```
 
+`/Users/goosedev72/vscode/new-dnevnik/newcode/schoolgram/frontend/src/store/index.ts`:
+
+```ts
+import { createStore } from 'vuex';
+
+interface State {
+  loginData: {
+    origin: string;
+    school: string;
+    user: string;
+    password: string;
+  };
+  diaryData: {
+    lessons: any[];
+  };
+}
+
+const initialState: State = {
+  loginData: {
+    origin: '',
+    school: '',
+    user: '',
+    password: '',
+  },
+  diaryData: {
+    lessons: [],
+  },
+};
+
+const store = createStore({
+  state: initialState,
+  mutations: {
+    updateLoginData(state, loginData) {
+      state.loginData = loginData;
+    },
+    updateDiaryData(state, diaryData) {
+      state.diaryData = diaryData;
+    },
+  },
+  getters: {
+    getLoginData(state) {
+      return state.loginData;
+    },
+    getDiaryData(state) {
+      return state.diaryData;
+    },
+  },
+});
+
+export default store;
+```
+
 `/Users/goosedev72/vscode/new-dnevnik/newcode/schoolgram/backend/main.ts`:
 
 ```ts
-const express = require('express');
-const app = express();
-const NS = require("netschoolapi");
-const port = 3000;
-const userCredentials = {
-  origin: 'your_origin',
-  login: 'your_login',
-  password: 'your_password',
-  school: 'your_school'
-};
+import express, { Request, Response, NextFunction } from 'express';
+import NS from 'netschoolapi';
+import fs from 'fs';
+import cors from 'cors';
+import path from 'path';
+const packageJson = require('./package.json');
 
+const app = express();
+const port = 3000;
+
+// Настройка CORS
+app.use(cors());
+
+// Parse JSON bodies
 app.use(express.json());
 
-// Endpoint для получения дневника по дате
-app.get('/diary/:date', async (req, res) => {
-  const date = req.params.date;
-  const filePath = `data/diary-json-files/${date}.json`;
-  
-  // Проверяем, есть ли файл в кэше
-  const fs = require('fs');
-  if (fs.existsSync(filePath)) {
-    res.sendFile(__dirname + '/' + filePath);
+// Middleware для прямых запросов из браузера
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.accepts('html') && req.method === 'GET' &&!req.path.startsWith('/api') &&!req.path.startsWith('/update-login-data') &&!req.path.startsWith('/diary/')) {
+    res.sendFile(path.join(__dirname, 'lol.html'));
   } else {
-    const user = new NS(userCredentials);
-    const startDate = new Date(date);
-    const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 1); // Для получения данных за весь день
-    
-    try {
-      const diary = await user.diary({ start: startDate, end: endDate });
-      const diaryJSON = diary.toJSON();
-      fs.writeFileSync(filePath, JSON.stringify(diaryJSON, null, 2));
-      res.send(diaryJSON);
-    } catch (error) {
-      console.error('Error fetching diary:', error);
-      res.status(500).send({ message: 'Failed to fetch diary' });
-    }
+    next();
+  }
+});
+
+// Эндпоинт для обновления данных логина
+app.post('/update-login-data', (req: Request, res: Response) => {
+  const loginData = req.body;
+  // Обновление данных в бэкенде (при необходимости)
+  res.send('Login data updated successfully');
+});
+
+// Эндпоинт для получения дневника по дате
+app.get('/diary/:date', async (req: Request, res: Response) => {
+  const date = req.params.date;
+  const loginData = req.query; // Получаем данные из query параметров
+
+  const user = new NS({
+    origin: loginData.origin,
+    login: loginData.user,
+    password: loginData.password,
+    school: loginData.school,
+  });
+
+  const startDate = new Date(date);
+  const endDate = new Date(date);
+  endDate.setDate(endDate.getDate() + 1); // Для получения данных за весь день
+
+  try {
+    const diary = await user.diary({ start: startDate, end: endDate });
+    const diaryJSON = diary.toJSON();
+    res.send(diaryJSON);
+  } catch (error) {
+    console.error('Error fetching diary:', error);
+    res.status(500).send({ message: 'Failed to fetch diary' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Backend listening at http://localhost:${port}`)
+  console.log(`Schoolgram BACKEND v3.0`);
+  console.log(` `);
+  console.log(` Listening requests`);
+  console.log(`  Address: http://localhost:${port}`);
+  console.log(`  NetSchoolApi version: ${packageJson.dependencies['netschoolapi']}`);
+  console.log(`  Express version: ${packageJson.dependencies['express']}`)
 });
-
 ```
 
 `/Users/goosedev72/vscode/new-dnevnik/newcode/schoolgram/backend/package.json`:
@@ -596,6 +661,21 @@ app.listen(port, () => {
 
 ```
 
+`/Users/goosedev72/vscode/new-dnevnik/newcode/schoolgram/backend/lol.html`:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Внимание</title>
+</head>
+<body>
+  <h1>Вы как-то зашли на Backend! Обычным пользователям он недоступен, а если вы разработчик... Frontend на порту 5173 или 5174 (смотря на логи Vite)</h1>
+  <p>Если вы хотели бы получить дневник, то используйте Frontend или зайдите на https://schoolgram-org.github.io/docs, чтобы создать свое крутое приложение на нашем Backend.</p>
+</body>
+</html>
+```
+
 `/Users/goosedev72/vscode/new-dnevnik/newcode/schoolgram/package.json`:
 
 ```json
@@ -605,7 +685,9 @@ app.listen(port, () => {
   "author": "schoolgram-org",
   "dependencies": {
     "axios": "^1.8.4",
-    "bun": "^1.2.0"
+    "bun": "^1.2.0",
+    "cors": "^2.8.5",
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

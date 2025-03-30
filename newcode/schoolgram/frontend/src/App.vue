@@ -5,11 +5,7 @@
       <input type="date" v-model="selectedDate" @change="fetchDiary">
       <LessonsList v-if="diaryData" :lessons="diaryData.lessons" />
       <div v-if="loginData">
-        <h2>Login Data (for debugging purposes):</h2>
-        <p>Origin: {{ loginData.origin }}</p>
-        <p>School: {{ loginData.school }}</p>
-        <p>User: {{ loginData.user }}</p>
-        <p>Password: {{ loginData.password }}</p>
+        <h2>diary</h2>
       </div>
     </div>
   </div>
@@ -27,13 +23,14 @@ export default {
   components: { Login, LessonsList },
   setup() {
     const store = useStore();
-    const loginData = store.getters.getLoginData;
+    let loginData = store.getters.getLoginData;
     const isLoggedIn = ref(false);
     const selectedDate = ref('');
     const diaryData = ref(null);
 
     const handleLoginSuccess = () => {
       isLoggedIn.value = true;
+      loginData.value = store.getters.getLoginData;
     };
 
     const waitForLoginData = async () => {
@@ -44,6 +41,14 @@ export default {
     };
 
     const fetchDiary = async () => {
+      if (!loginData.value || Object.keys(loginData.value).length === 0) {
+        console.error('loginData is empty');
+        return;
+      }
+      // console.log(store.getters.getLoginData.origin);
+      // console.log(store.getters.getLoginData.user);
+      // console.log(store.getters.getLoginData.password);
+      // console.log(store.getters.getLoginData.school);
       try {
         const response = await axios.get(`http://localhost:3000/diary/${selectedDate.value}`, {
           params: {
